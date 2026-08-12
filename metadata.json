@@ -1,0 +1,6 @@
+{
+  "name": "Talk AI",
+  "description": "An intelligent, high-reasoning AI chat assistant powered by Gemini 3.1 Pro Preview with thinking mode, multi-modal reasoning, web grounding, code generation, GitHub integration, and live previews.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
