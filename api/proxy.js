@@ -24,8 +24,8 @@ function checkUrl(value) {
   if (!["http:", "https:"].includes(u.protocol) || u.username || u.password) throw new Error("Only normal HTTP and HTTPS website addresses are supported.");
   const h = u.hostname.toLowerCase();
   if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal") ||
-      /^(127\\.|10\\.|192\\.168\\.|169\\.254\\.|0\\.)/.test(h) ||
-      /^172\\.(1[6-9]|2[0-9]|3[01])\\./.test(h) || h === "::1" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80:")) {
+      /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(h) ||
+      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) || h === "::1" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80:")) {
     throw new Error("Private network addresses are blocked for safety.");
   }
   return u;
