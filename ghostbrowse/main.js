@@ -23,11 +23,11 @@ function home(){ $('frame').src='about:blank';active='';$('browser').classList.a
 $('open').addEventListener('submit',e=>{e.preventDefault();open($('address').value)});
 $('mini').addEventListener('submit',e=>{e.preventDefault();open($('current').value)});
 document.querySelectorAll('[data-url]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.url)));
-$('reload').onclick=()=>{if(active)$('frame').src=active};
+$('reload').onclick=()=>{if(active)$('frame').src='/api/proxy?url='+encodeURIComponent(active)};
 $('back').onclick=()=>{try{$('frame').contentWindow.history.back()}catch{toast('This site blocks embedded navigation controls.')}};
 $('forward').onclick=()=>{try{$('frame').contentWindow.history.forward()}catch{toast('This site blocks embedded navigation controls.')}};
 $('close').onclick=home;$('clear').onclick=()=>{home();toast('Current GhostBrowse view cleared. This cannot erase network or website records.')};
-$('retry').onclick=()=>{if(active){$('blocked').classList.add('hidden');$('frame').src=active}};
-$('frame').addEventListener('load',()=>{clearTimeout(timer)});$('frame').addEventListener('error',()=>{$('blocked').classList.remove('hidden')});
+$('retry').onclick=()=>{if(active){$('blocked').classList.add('hidden');$('frame').src='/api/proxy?url='+encodeURIComponent(active)}};
+$('frame').addEventListener('load',()=>{if($('frame').src!=='about:blank')clearTimeout(timer)});$('frame').addEventListener('error',()=>{$('blocked').classList.remove('hidden')});
 window.addEventListener('message',()=>{/* Do not accept commands from embedded pages. */});
 })();
