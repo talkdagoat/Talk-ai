@@ -43,6 +43,24 @@ function proxyUrl(target, origin, token) {
   return origin + "/api/proxy?token=" + encodeURIComponent(token) + "&url=" + encodeURIComponent(target);
 }
 
+function rewriteCss(css, baseUrl, proxyOrigin, token) {
+  return css.replace(/url\\(\\s*(["']?)(.*?)\\1\\s*\\)/gi, (all, quote, value) => {
+    const raw = String(value || "").trim();
+    if (!raw || /^(data:|blob:|#|javascript:)/i.test(raw)) return all;
+    try {
+      const u = new URL(raw, baseUrl);
+      if (!["http:", "https:"].includes(u.protocol)) return all;
+      return "url(" + quote + proxyUrl(u.href, proxyOrigin, token) + quote + ")";
+    } catch { return all; }
+  }).replace(/@import\\s+(["'])(.*?)\\1/gi, (all, quote, value) => {
+    try {
+      const u = new URL(value, baseUrl);
+      if (!["http:", "https:"].includes(u.protocol)) return all;
+      return "@import " + quote + proxyUrl(u.href, proxyOrigin, token) + quote;
+    } catch { return all; }
+  });
+}
+
 function rewriteHtml(html, baseUrl, proxyOrigin, token) {
   const rewrite = raw => {
     try {
@@ -123,6 +141,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   if (method === "HEAD") return res.end();
   if (type.includes("text/html")) return res.send(rewriteHtml(await upstream.text(), target.href, proxyOrigin, token));
+  if (type.includes("text/css")) return res.send(rewriteCss(await upstream.text(), target.href, proxyOrigin, token));
   return res.send(Buffer.from(await upstream.arrayBuffer()));
 };
 
