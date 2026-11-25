@@ -40,5 +40,5 @@ module.exports = async function handler(req, res) {
     COOKIE + "=" + sessionToken + "; Path=/; Max-Age=1800; HttpOnly; Secure; SameSite=Lax",
     CHALLENGE_COOKIE + "=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
   ]);
-  return res.status(200).json({ok:true, expiresIn:1800, aiToken, aiTokenExpiresIn:1800});
+  return res.status(200).json({ok:true, expiresIn:1800, proxyToken:sessionToken, aiToken, aiTokenExpiresIn:1800});
 };
