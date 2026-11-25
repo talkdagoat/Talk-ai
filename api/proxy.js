@@ -119,3 +119,5 @@ module.exports = async function handler(req, res) {
   const data = Buffer.from(await upstream.arrayBuffer());
   return res.send(data);
 };
+
+module.exports.config = { api: { bodyParser: false } };
