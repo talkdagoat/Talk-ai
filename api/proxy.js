@@ -31,16 +31,16 @@ function checkUrl(value) {
   return u;
 }
 
-function proxyUrl(target) {
-  return "/api/proxy?url=" + encodeURIComponent(target);
+function proxyUrl(target, origin) {
+  return origin + "/api/proxy?url=" + encodeURIComponent(target);
 }
 
-function rewriteHtml(html, baseUrl) {
+function rewriteHtml(html, baseUrl, proxyOrigin) {
   const rewrite = raw => {
     try {
       const u = new URL(raw, baseUrl);
       if (!["http:", "https:"].includes(u.protocol)) return raw;
-      return proxyUrl(u.href);
+      return proxyUrl(u.href, proxyOrigin);
     } catch { return raw; }
   };
   html = html.replace(/(\b(?:href|src|action|poster|data)\s*=\s*)(["'])(.*?)\2/gi, (all, prefix, quote, value) => {
@@ -50,7 +50,7 @@ function rewriteHtml(html, baseUrl) {
   html = html.replace(/url\((\s*["']?)(https?:\/\/[^)'"]+)\1\)/gi, (all, q, value) => "url(" + q + rewrite(value) + q + ")");
   html = html.replace(/<head([^>]*)>/i, (all) => all + `<base href="${baseUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"><script>
 (function(){
- const P="/api/proxy?url=";
+ const P=${JSON.stringify(proxyOrigin + "/api/proxy?url=")};
  function prox(v){try{const u=new URL(v,document.baseURI);if(u.protocol==="http:"||u.protocol==="https:")return P+encodeURIComponent(u.href)}catch(e){}return v}
  const f=window.fetch;window.fetch=function(i,o){if(typeof i==="string")i=prox(i);else if(i instanceof Request)i=new Request(prox(i.url),i);return f.call(this,i,o)};
  const x=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){arguments[1]=prox(u);return x.apply(this,arguments)};
@@ -64,6 +64,8 @@ function rewriteHtml(html, baseUrl) {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  const host = String(req.headers.host || "");
+  const proxyOrigin = (req.headers["x-forwarded-proto"] || "https") + "://" + host;
   if (!validSession(req)) return res.status(401).json({ error: "Your browsing session expired. Return to GhostBrowse and open the site again." });
   const raw = typeof req.query.url === "string" ? req.query.url : "";
   if (!raw) return res.status(400).json({ error: "Missing website URL." });
@@ -99,7 +101,7 @@ module.exports = async function handler(req, res) {
     if (location) {
       try {
         const next = checkUrl(new URL(location, target).href);
-        res.setHeader("Location", proxyUrl(next.href));
+        res.setHeader("Location", proxyUrl(next.href, proxyOrigin));
         return res.status(upstream.status).end();
       } catch {}
     }
@@ -114,7 +116,7 @@ module.exports = async function handler(req, res) {
   if (method === "HEAD") return res.end();
   if (type.includes("text/html")) {
     const html = await upstream.text();
-    return res.send(rewriteHtml(html, target.href));
+    return res.send(rewriteHtml(html, target.href, proxyOrigin));
   }
   const data = Buffer.from(await upstream.arrayBuffer());
   return res.send(data);
